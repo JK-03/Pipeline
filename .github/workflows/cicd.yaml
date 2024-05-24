@@ -1,3 +1,4 @@
+
 name: CI/CD Pipeline
 
 on: 
@@ -99,7 +100,7 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           config-file: .github/codeql /codeql.config.yml
-
+          
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
@@ -111,6 +112,7 @@ jobs:
 
       - name: Build
         run: cd frontend && npm run build
+
 
   deploy:
     name: 🚚 Deploy Frontend Artifact
@@ -131,3 +133,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        uses: actions/deploy-pages@v1
