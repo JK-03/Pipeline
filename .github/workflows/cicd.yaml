@@ -1,100 +1,116 @@
 name: CI/CD Pipeline
 
-on:
-  push:
+on: 
+  push: 
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
-jobs:
-  build:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs: 
+  build: 
+    name: Build Frontend Artifact
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'npm'
+      
+      - run: |
+          cd frontend
+          npm ci
 
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build artifact
-      run: npm run build
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: build-artifact
-        path: build/
+      - run: |
+          cd frontend
+          npm run build
+      
+      - uses: actions/upload-pages-artifact@v1
+        with: 
+          path: frontend/build
 
   check-dependencies:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: npm ci
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'npm'
 
-    - name: Check dependencies for security issues
-      run: npm audit --audit-level=high
+      - run: |
+          cd frontend
+          npm ci
+
+      - run: |
+          cd frontend
+          npm audit --audit-level=high
 
   lint:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: npm ci
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'npm'
 
-    - name: Lint code
-      run: npm run lint
+      - run: |
+          cd frontend
+          npm ci
+
+      - run: |
+          cd frontend
+          npm run lint
 
   static-analysis:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: npm ci
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'npm'
 
-    - name: Run static analysis
-      run: npm run static-analysis
+      - run: |
+          cd frontend
+          npm ci
+
+      - run: |
+          cd frontend
+          npm run static-analysis
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Download artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: build-artifact
+      - name: Download artifact
+        uses: actions/download-pages-artifact@v1
 
-    - name: Deploy to server
-      run: |
-        # Supongamos que tienes configurado un servidor SSH para el despliegue
-        echo "Deploying to server..."
-        scp -r build/ user@yourserver.com:/path/to/deploy/
-        ssh user@yourserver.com 'cd /path/to/deploy && npm install --production && pm2 restart your-app'
+      - name: Deploy to server
+        run: |
+          # Supongamos que tienes configurado un servidor SSH para el despliegue
+          echo "Deploying to server..."
+          scp -r frontend/build/ user@yourserver.com:/path/to/deploy/
+          ssh user@yourserver.com 'cd /path/to/deploy && npm install --production && pm2 restart your-app'
 
   verify:
     needs: deploy
     runs-on: ubuntu-latest
-
     steps:
-    - name: Verify deployment
-      run: |
-        echo "Verifying deployment..."
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+          # Aquí podrías agregar una verificación real, como hacer una solicitud HTTP
+          curl -f http://yourserver.com || exit 1
