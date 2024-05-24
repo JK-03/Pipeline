@@ -2,43 +2,45 @@ name: CI/CD Pipeline
 
 on: 
   push: 
+    branches:
+      - olt
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-jobs: 
-  build: 
-    name: Build Frontend Artifact
+jobs:
+  build:
+    name: 🛠️ Build Frontend Artifact
+    needs:
+      - audit
     runs-on: ubuntu-latest
-    needs: audit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node 16
+        uses: actions/setup-node@v3
         with:
           node-version: 16.x
-          cache: 'npm'
-      
-      - name: Install Dependencies
-        run: |
-          cd frontend
-          npm i
-      - name: Build artifact
-        run: |
-          cd frontend
-          npm run build
-      
-      - uses: actions/upload-pages-artifact@v1
-        with: 
-          path: frontend/build
 
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: fe-node-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install deps
+        run: cd frontend && npm i
+
+      - name: Compile code
+        run: cd frontend && npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: frontend/build
+  
   audit:
-    name: Audit Frontend Deps
+    name: 🛡️ Audit Frontend Packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run the audit on production deps only
-        run: npm audit --omit=dev 
+      - name: Check for vulnerabilities
+        run: cd frontend && npm audit --omit=dev
