@@ -29,3 +29,16 @@ jobs:
         run: |
           cd frontend
           npm run build
+      
+      - uses: actions/upload-pages-artifact@v1
+        with: 
+          path: frontend/build
+
+  audit:
+    name: Audit Frontend Deps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run the audit on production deps only
+        run: npm audit --omit=dev 
