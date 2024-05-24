@@ -113,7 +113,6 @@ jobs:
       - name: Build
         run: cd frontend && npm run build
 
-
   deploy:
     name: 🚚 Deploy Frontend Artifact
     runs-on: ubuntu-latest
