@@ -114,42 +114,40 @@ jobs:
         run: cd frontend && npm run build
 
   deploy:
-  name: 🚚 Deploy Frontend Artifact
-  runs-on: ubuntu-latest
-  needs:
-    - lint
-    - test
-    - static-analysis
-  if: github.ref == 'refs/heads/olt'
-  outputs:
-    page_url: ${{ steps.deployment.outputs.page_url }}
-    verification_status: ${{ steps.deployment.outputs.verification_status }}
-  permissions:
-    pages: write
-    id-token: write
-  environment:
-    name: github-pages
-    url: ${{ steps.deployment.outputs.page_url }}
-  steps:
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v1
-      env:
-        PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+    name: 🚚 Deploy Frontend Artifact
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - test
+      - static-analysis
+    if: github.ref == 'refs/heads/olt'
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
 
-    - name: ✅ Verify Deployment
-      id: verification
-      run: |
-        response=$(curl -s -o /dev/null -w "%{http_code}" $PAGE_URL)
-        if [ $response -eq 200 ]; then
-          echo "Deployment verified successfully!"
-          echo "::set-output name=verification_status::success"
-        else
-          echo "Deployment verification failed with HTTP status code $response"
-          echo "::set-output name=verification_status::failure"
-          exit 1
-        fi
+  verify:
+    name: 🧪 Verify Successful Deployment
+    needs:
+      - deploy
+    runs-on: ubuntu-latest
+    if: success()
+    permissions: write-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Set Verification Status
-      if: always()
-      run: echo "Verification status: ${{ needs.deploy.outputs.verification_status }}"
+      - name: Run Frontend Smoke Test
+        run: |
+          export TEST_URL=${{needs.deploy.outputs.page_url}}
+          cd frontend/e2e
+          npm i
+          npm run smoke
