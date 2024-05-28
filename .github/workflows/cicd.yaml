@@ -1,8 +1,12 @@
-
 name: CI/CD Pipeline
 
 on: 
-  push: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -31,26 +35,22 @@ jobs:
           cd frontend
           npm run build
       
-      - uses: actions/upload-pages-artifact@v1
+      - uses: actions/upload-artifact@v2
         with: 
+          name: frontend-build
           path: frontend/build
 
-      # - id: build-publish
-      #   uses: bitovi/github-actions-react-to-github-pages@v1.2.2
-      #   with:
-      #     path: build # change to your build folder
-      
   audit:
-    name: Audit Frontend Deps
+    name: 🪄 Audit Frontend Deps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Run the audit on production deps only
-        run: npm audit --omit=dev 
+        run: npm audit --omit=dev
   
   lint:
-    name: 🧼 Ensure Code Style
+    name: 📎 Ensure Code Style
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -65,11 +65,11 @@ jobs:
       - name: Install deps
         run: cd frontend && npm i
 
-      - name: 😂 Lint code
+      - name: 🔍 Lint code
         run: cd frontend && npm run lint
   
   test:
-    name: 🧪 Run Unit Tests
+    name: 🪛 Run Unit Tests
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -114,13 +114,13 @@ jobs:
         run: cd frontend && npm run build
 
   deploy:
-    name: 🚚 Deploy Frontend Artifact
+    name: 📦 Deploy Frontend Artifact
     runs-on: ubuntu-latest
     needs:
       - lint
       - test
       - static-analysis
-    if: github.ref == 'refs/heads/olt'
+    if: github.ref == 'refs/heads/main'
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     permissions:
@@ -132,7 +132,10 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/github-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/build
 
   verify:
     name: 🧪 Verify Successful Deployment
