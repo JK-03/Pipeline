@@ -1,11 +1,13 @@
 name: Pipeline for Continuous Integration and Deployment
 
+# This workflow gets triggered on push or pull request events to the main branch
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
+# Permissions
 permissions:
   contents: read
   pages: write
