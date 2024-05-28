@@ -1,18 +1,16 @@
 name: CI/CD Pipeline
 
-on: 
+on:
+  pull_request:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - olt
 
 permissions:
   contents: read
   pages: write
   id-token: write
-
+  
 jobs: 
   build: 
     name: Build Frontend Artifact
@@ -115,11 +113,12 @@ jobs:
 
   deploy:
     name: 📦 Deploy Frontend Artifact
-     runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     needs:
       - lint
       - test
       - static-analysis
+    #if: github.ref == 'refs/heads/olt'
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     permissions:
